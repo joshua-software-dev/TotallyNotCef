@@ -22,6 +22,7 @@
         -->
         <RollForward>Major</RollForward>
         <SelfContained>false</SelfContained>
+        <Version>1.0.0.1</Version>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
@@ -53,10 +54,63 @@
         <PackageReference Include="NetCoreServer" Version="7.0.0" />
     </ItemGroup>
 
-    <!-- <ItemGroup>
-        <None Update="crash_reporter.cfg">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-    </ItemGroup> -->
+    <Target Name="DownloadExeFixer" AfterTargets="Publish">
+        <DownloadFile
+            Condition=" $([MSBuild]::IsOSPlatform('Linux')) And !Exists('$(MSBuildThisFileDirectory)/../gui_converter') "
+            DestinationFolder="$(MSBuildThisFileDirectory)/../"
+            SourceUrl="https://github.com/joshua-software-dev/SharpGuiConverter/releases/download/v1.0.0.0/gui_converter_linux_64.zip"
+        />
+        <DownloadFile
+            Condition=" $([MSBuild]::IsOSPlatform('OSX')) And !Exists('$(MSBuildThisFileDirectory)/../gui_converter') "
+            DestinationFolder="$(MSBuildThisFileDirectory)/../"
+            SourceUrl="https://github.com/joshua-software-dev/SharpGuiConverter/releases/download/v1.0.0.0/gui_converter_macos10_10_64.zip"
+        />
+        <DownloadFile
+            Condition=" $([MSBuild]::IsOSPlatform('Windows')) And !Exists('$(MSBuildThisFileDirectory)/../gui_converter.exe') "
+            DestinationFolder="$(MSBuildThisFileDirectory)/../"
+            SourceUrl="https://github.com/joshua-software-dev/SharpGuiConverter/releases/download/v1.0.0.0/gui_converter_win_64.zip"
+        />
+    </Target>
+
+    <Target Name="UnzipExeFixer" AfterTargets="DownloadExeFixer">
+        <Unzip
+            Condition=" Exists('$(MSBuildThisFileDirectory)/../gui_converter_linux_64.zip') "
+            DestinationFolder="$(MSBuildThisFileDirectory)/../"
+            SourceFiles="$(MSBuildThisFileDirectory)/../gui_converter_linux_64.zip"
+        />
+        <Unzip
+            Condition=" Exists('$(MSBuildThisFileDirectory)/../gui_converter_macos10_10_64.zip') "
+            DestinationFolder="$(MSBuildThisFileDirectory)/../"
+            SourceFiles="$(MSBuildThisFileDirectory)/../gui_converter_macos10_10_64.zip"
+        />
+        <Unzip
+            Condition=" Exists('$(MSBuildThisFileDirectory)/../gui_converter_win_64.zip') "
+            DestinationFolder="$(MSBuildThisFileDirectory)/../"
+            SourceFiles="$(MSBuildThisFileDirectory)/../gui_converter_win_64.zip"
+        />
+    </Target>
+
+    <Target Name="DeleteLeftoverZips" AfterTargets="UnzipExeFixer" >
+        <Delete Files="$(MSBuildThisFileDirectory)/../gui_converter_linux_64.zip;$(MSBuildThisFileDirectory)/../gui_converter_macos10_10_64.zip;$(MSBuildThisFileDirectory)/../gui_converter_win_64.zip" />
+    </Target>
+
+    <Target Name="FixExeType" AfterTargets="DeleteLeftoverZips">
+        <Exec
+            Condition=" $([MSBuild]::IsOSPlatform('Linux')) Or $([MSBuild]::IsOSPlatform('OSX')) "
+            Command=" chmod +x $(MSBuildThisFileDirectory)/../gui_converter &amp;&amp; $(MSBuildThisFileDirectory)/../gui_converter $(MSBuildThisFileDirectory)$(OutDir)publish/TotallyNotCef.exe"
+            ConsoleToMSBuild="true"
+            IgnoreExitCode="false"
+            StandardErrorImportance="high"
+            StandardOutputImportance="high"
+        />
+        <Exec
+            Condition=" $([MSBuild]::IsOSPlatform('Windows')) "
+            Command=" $(MSBuildThisFileDirectory)/../gui_converter.exe $(MSBuildThisFileDirectory)$(OutDir)publish/TotallyNotCef.exe"
+            ConsoleToMSBuild="true"
+            IgnoreExitCode="false"
+            StandardErrorImportance="high"
+            StandardOutputImportance="high"
+        />
+    </Target>
 
 </Project>
