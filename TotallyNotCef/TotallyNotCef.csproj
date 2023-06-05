@@ -7,9 +7,8 @@
         <Optimize>true</Optimize>
 
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-        <ApplicationManifest>app.manifest</ApplicationManifest>
         <EnableWindowsTargeting>true</EnableWindowsTargeting>
-        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <FileVersion>1.0.0.2</FileVersion>
         <OutputPath>bin/$(Configuration)/</OutputPath>
         <OutputType>Exe</OutputType>
         <Platform>x64</Platform>
@@ -22,7 +21,6 @@
         -->
         <RollForward>Major</RollForward>
         <SelfContained>false</SelfContained>
-        <Version>1.0.0.1</Version>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">

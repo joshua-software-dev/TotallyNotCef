@@ -29,6 +29,7 @@ using CefSharp.OffScreen;
 using System;
 using System.IO;
 using System.Net;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -40,9 +41,16 @@ public static class Program
 {
     public static int Main(string[] args)
     {
-        if (args.Length < 2) return 1;
+        if (args.Length < 3) return 1;
         var url = args[0];
         ushort.TryParse(args[1], out var httpServerPort);
+        ushort.TryParse(args[2], out var enableAudio);
+        var enableAudioParsed = enableAudio switch
+        {
+            0 => false,
+            1 => true,
+            _ => throw new ArgumentOutOfRangeException(nameof(enableAudio))
+        };
 
         AsyncContext.Run
         (
@@ -67,8 +75,11 @@ public static class Program
                 catch (Exception) { }
 
                 settings.DisableGpuAcceleration();
-                settings.CefCommandLineArgs["autoplay-policy"] = "no-user-gesture-required";
-                settings.CefCommandLineArgs.Remove("mute-audio");
+                if (enableAudioParsed)
+                {
+                    settings.CefCommandLineArgs["autoplay-policy"] = "no-user-gesture-required";
+                    settings.CefCommandLineArgs.Remove("mute-audio");
+                }
 
                 Console.WriteLine(settings.CachePath);
                 Console.WriteLine("Initializing CEF installation...");
@@ -117,7 +128,17 @@ public static class Program
                             browser,
                             cts
                         );
-                        server.Start();
+
+                        try
+                        {
+                            server.Start();
+                        }
+                        catch (SocketException)
+                        {
+                            Console.WriteLine($"Could not bind to socket: {httpServerPort}, exiting...");
+                            System.Environment.Exit(2);
+                        }
+
                         Console.WriteLine($"Listening on http://127.0.0.1:{httpServerPort}/");
 
                         while (!cts.IsCancellationRequested)
