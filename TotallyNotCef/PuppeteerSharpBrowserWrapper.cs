@@ -1,0 +1,89 @@
+#if !OS_IS_WINDOWS || DEBUG
+using System;
+using System.IO;
+using System.Net;
+using System.Net.Sockets;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
+using PuppeteerSharp;
+#endif
+
+
+namespace TotallyNotCef;
+
+public class PuppeteerSharpBrowserWrapper : ICefBrowserWrapper
+{
+    #if OS_IS_WINDOWS
+    public string? GetHtmlSource() => string.Empty;
+    #elif !OS_IS_WINDOWS || DEBUG
+    private IPage? _page;
+    public string? GetHtmlSource()
+    {
+        return _page?.GetContentAsync().GetAwaiter().GetResult();
+    }
+
+    public async Task Start(string url, ushort httpServerPort, bool enableAudio)
+    {
+        var downloadPath = Path.Join
+        (
+            Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+            "ChromeDownload"
+        );
+
+        var options = new LaunchOptions { Headless = true };
+        using (var browserFetcher = new BrowserFetcher(new BrowserFetcherOptions { Path = downloadPath }))
+        {
+            if (!Path.Exists(downloadPath))
+            {
+                Console.WriteLine($"Downloading Chrome...");
+                var info = await browserFetcher.DownloadAsync(BrowserFetcher.DefaultChromiumRevision);
+                Console.WriteLine($"Chrome downloaded to: {info.ExecutablePath}");
+                options.ExecutablePath = info.ExecutablePath;
+            }
+            else
+            {
+                options.ExecutablePath = browserFetcher.GetExecutablePath(BrowserFetcher.DefaultChromiumRevision);
+                Console.WriteLine($"Using existing Chrome install: {options.ExecutablePath}");
+            }
+        }
+
+        if (!enableAudio)
+        {
+            options.Args = new [] { "--mute-audio" };
+        }
+
+        var browser = await Puppeteer.LaunchAsync(options);
+
+        _page = await browser.NewPageAsync();
+        await _page.GoToAsync(url);
+
+        Console.WriteLine("Starting http server...");
+        var cts = new CancellationTokenSource();
+        var server = new BrowserHtmlSourceHttpServer
+        (
+            IPAddress.Parse("127.0.0.1"),
+            httpServerPort,
+            this,
+            cts
+        );
+
+        try
+        {
+            server.Start();
+        }
+        catch (SocketException)
+        {
+            Console.WriteLine($"Could not bind to socket: {httpServerPort}, exiting...");
+            System.Environment.Exit(2);
+        }
+
+        Console.WriteLine($"Listening on http://127.0.0.1:{httpServerPort}/");
+
+        while (!cts.IsCancellationRequested)
+        {
+            await Task.Delay(10, cts.Token);
+        }
+    }
+    #endif
+}
