@@ -40,6 +40,10 @@
         <EmbeddedResource Remove="obj\**" />
         <None Remove="bin\**" />
         <None Remove="obj\**" />
+        <Content Include="$(MSBuildThisFileDirectory)/../LICENSE" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="$(MSBuildThisFileDirectory)/../3rdparty/LICENSE_CEF.txt" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="$(MSBuildThisFileDirectory)/../3rdparty/LICENSE_CEFSHARP" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="$(MSBuildThisFileDirectory)/../3rdparty/LICENSE_PUPPETEERSHARP" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
     <ItemGroup>
