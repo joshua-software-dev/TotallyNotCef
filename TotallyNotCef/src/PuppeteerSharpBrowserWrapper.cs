@@ -48,9 +48,9 @@ public class PuppeteerSharpBrowserWrapper : ICefBrowserWrapper
             }
         }
 
-        if (!enableAudio)
+        if (enableAudio)
         {
-            options.Args = new [] { "--mute-audio" };
+            options.IgnoredDefaultArgs = new [] { "--mute-audio" };
         }
 
         var browser = await Puppeteer.LaunchAsync(options);
