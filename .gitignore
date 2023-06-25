@@ -116,3 +116,4 @@ UpgradeLog*.XML
 publish_dev.sh
 gui_converter
 gui_converter.exe
+outputbin/*
