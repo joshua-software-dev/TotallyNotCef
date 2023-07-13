@@ -33,15 +33,22 @@ public static class Program
 {
     public static int Main(string[] args)
     {
-        if (args.Length < 3) return 1;
+        if (args.Length < 4) return 1;
         var url = args[0];
         ushort.TryParse(args[1], out var httpServerPort);
         ushort.TryParse(args[2], out var enableAudio);
+        ushort.TryParse(args[3], out var enableWebSockets);
         var enableAudioParsed = enableAudio switch
         {
             0 => false,
             1 => true,
             _ => throw new ArgumentOutOfRangeException(nameof(enableAudio))
+        };
+        var enableWebSocketsParsed = enableWebSockets switch
+        {
+            0 => false,
+            1 => true,
+            _ => throw new ArgumentOutOfRangeException(nameof(enableWebSockets))
         };
 
         #if OS_IS_WINDOWS
@@ -54,7 +61,7 @@ public static class Program
         (
             async delegate
             {
-                await wrapper.Start(url, httpServerPort, enableAudioParsed);
+                await wrapper.Start(url, httpServerPort, enableAudioParsed, enableWebSocketsParsed);
             }
         );
 

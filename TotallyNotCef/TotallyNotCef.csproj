@@ -9,7 +9,7 @@
 
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <EnableWindowsTargeting>true</EnableWindowsTargeting>
-        <FileVersion>1.0.0.5</FileVersion>
+        <FileVersion>1.0.0.6</FileVersion>
         <OutputPath>bin/$(Configuration)/</OutputPath>
         <OutputType>Exe</OutputType>
         <Platform>x64</Platform>
@@ -48,7 +48,7 @@
 
     <ItemGroup>
         <PackageReference Condition=" '$(Configuration)' == 'Debug' Or '$(RuntimeIdentifier)' == 'win-x64' " Include="CefSharp.OffScreen.NetCore" Version="112.3.0" />
-        <PackageReference Condition=" '$(Configuration)' == 'Debug' Or '$(RuntimeIdentifier)' == 'linux-x64' " Include="PuppeteerSharp" Version="10.0.0" />
+        <PackageReference Condition=" '$(Configuration)' == 'Debug' Or '$(RuntimeIdentifier)' == 'linux-x64' " Include="PuppeteerSharp" Version="10.1.1" />
         <PackageReference Include="NetCoreServer" Version="7.0.0" />
     </ItemGroup>
 

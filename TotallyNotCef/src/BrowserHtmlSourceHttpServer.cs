@@ -50,6 +50,13 @@ public class BrowserHtmlSourceHttpServer : NetCoreServer.HttpServer
                     SendResponseAsync(Response.MakeHeadResponse());
                     break;
                 }
+                case "POST":
+                {
+                    Console.WriteLine($"POST {DateTime.Now} | {request.Url}");
+                    _browser.ForwardMessageToFakeWebSocket(request.Body);
+                    SendResponseAsync(Response.MakeGetResponse());
+                    break;
+                }
                 default:
                 {
                     SendResponseAsync(Response.MakeErrorResponse("Unsupported HTTP method: " + request.Method));

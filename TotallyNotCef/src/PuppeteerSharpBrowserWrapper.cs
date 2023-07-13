@@ -16,14 +16,19 @@ public class PuppeteerSharpBrowserWrapper : ICefBrowserWrapper
 {
     #if OS_IS_WINDOWS
     public string? GetHtmlSource() => string.Empty;
+    public void ForwardMessageToFakeWebSocket(string jsonString) { }
     #elif !OS_IS_WINDOWS || DEBUG
     private IPage? _page;
-    public string? GetHtmlSource()
-    {
-        return _page?.GetContentAsync().GetAwaiter().GetResult();
-    }
+    public string? GetHtmlSource() =>
+        _page?.GetContentAsync().GetAwaiter().GetResult();
 
-    public async Task Start(string url, ushort httpServerPort, bool enableAudio)
+    public void ForwardMessageToFakeWebSocket(string jsonString) =>
+        _page?
+            .EvaluateExpressionAsync($"window.RegisteredWebSockets[0].registeredFunctions.message(new MessageEvent('message', {{data: '{System.Web.HttpUtility.JavaScriptStringEncode(jsonString)}'}}))")
+            .GetAwaiter()
+            .GetResult();
+
+    public async Task Start(string url, ushort httpServerPort, bool enableAudio, bool enableWebSockets)
     {
         var downloadPath = Path.Join
         (
@@ -50,12 +55,18 @@ public class PuppeteerSharpBrowserWrapper : ICefBrowserWrapper
 
         if (enableAudio)
         {
+            Console.WriteLine("Enabling audio...");
             options.IgnoredDefaultArgs = new [] { "--mute-audio" };
         }
 
         var browser = await Puppeteer.LaunchAsync(options);
 
         _page = await browser.NewPageAsync();
+        if (!enableWebSockets)
+        {
+            Console.WriteLine("Injecting javascript to disable browser WebSockets...");
+            await _page.EvaluateExpressionOnNewDocumentAsync(JavascriptHolder.InjectionScript);
+        }
         await _page.GoToAsync(url);
 
         Console.WriteLine("Starting http server...");

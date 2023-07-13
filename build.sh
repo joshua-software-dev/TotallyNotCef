@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This ensures this script is run from folder containing it
+# This ensures this script is run from the folder containing it
 SCRIPT=$(readlink -f "$0")
 SCRIPTPATH=$(dirname "$SCRIPT")
 cd "$SCRIPTPATH"
