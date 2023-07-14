@@ -62,10 +62,15 @@ public class PuppeteerSharpBrowserWrapper : ICefBrowserWrapper
         var browser = await Puppeteer.LaunchAsync(options);
 
         _page = await browser.NewPageAsync();
-        if (!enableWebSockets)
+        if (enableWebSockets)
+        {
+            Console.WriteLine("Injecting javascript to track browser WebSockets...");
+            await _page.EvaluateExpressionOnNewDocumentAsync(JavascriptHolder.EnableInjectionScript);
+        }
+        else
         {
             Console.WriteLine("Injecting javascript to disable browser WebSockets...");
-            await _page.EvaluateExpressionOnNewDocumentAsync(JavascriptHolder.InjectionScript);
+            await _page.EvaluateExpressionOnNewDocumentAsync(JavascriptHolder.DisableInjectionScript);
         }
         await _page.GoToAsync(url);
 

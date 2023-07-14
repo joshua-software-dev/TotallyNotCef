@@ -49,20 +49,31 @@ public class CustomJavascriptInjectionFilter : IResponseFilter
         BODY
     }
 
-    private const string InjectionScript =
+    private const string DisableInjectionScript =
         $"""
         <script>
-        {JavascriptHolder.InjectionScript}
+        {JavascriptHolder.DisableInjectionScript}
         </script>
         """;
 
+    private const string EnableInjectionScript =
+        $"""
+        <script>
+        {JavascriptHolder.EnableInjectionScript}
+        </script>
+        """;
+
+    private readonly string _scriptOfChoice;
     private readonly string _location;
     private readonly List<byte> _overflow = new ();
 
     private int _offset = 0;
 
-    public CustomJavascriptInjectionFilter(Locations location = Locations.HEAD)
+    public CustomJavascriptInjectionFilter(bool enableWebSockets, Locations location = Locations.HEAD)
     {
+        _scriptOfChoice = enableWebSockets
+            ? EnableInjectionScript
+            : DisableInjectionScript;
         this._location = location switch
         {
             Locations.HEAD => "<head>",
@@ -116,21 +127,21 @@ public class CustomJavascriptInjectionFilter : IResponseFilter
                 if (_offset >= _location.Length)
                 {
                     _offset = 0;
-                    buffersize = Math.Min(InjectionScript.Length, dataOut.Length - dataOutWritten);
+                    buffersize = Math.Min(_scriptOfChoice.Length, dataOut.Length - dataOutWritten);
 
                     if (buffersize > 0)
                     {
-                        var data = Encoding.UTF8.GetBytes(InjectionScript);
+                        var data = Encoding.UTF8.GetBytes(_scriptOfChoice);
                         dataOut.Write(data, 0, (int) buffersize);
                         dataOutWritten += buffersize;
                     }
 
-                    if (buffersize < InjectionScript.Length)
+                    if (buffersize < _scriptOfChoice.Length)
                     {
-                        var remaining = InjectionScript.Substring
+                        var remaining = _scriptOfChoice.Substring
                         (
                             (int) buffersize,
-                            (int) (InjectionScript.Length - buffersize)
+                            (int) (_scriptOfChoice.Length - buffersize)
                         );
                         _overflow.AddRange(Encoding.UTF8.GetBytes(remaining));
                     }
@@ -160,6 +171,13 @@ public class CustomJavascriptInjectionFilter : IResponseFilter
 
 public class CustomResourceRequestHandler : ResourceRequestHandler
 {
+    private readonly bool _enableWebSockets;
+
+    public CustomResourceRequestHandler(bool enableWebSockets)
+    {
+        _enableWebSockets = enableWebSockets;
+    }
+
     protected override IResponseFilter GetResourceResponseFilter
     (
         IWebBrowser chromiumWebBrowser,
@@ -169,12 +187,19 @@ public class CustomResourceRequestHandler : ResourceRequestHandler
         IResponse response
     )
     {
-        return new CustomJavascriptInjectionFilter();
+        return new CustomJavascriptInjectionFilter(_enableWebSockets);
     }
 }
 
 public class CustomRequestHandler : RequestHandler
 {
+    private readonly bool _enableWebSockets;
+
+    public CustomRequestHandler(bool enableWebSockets)
+    {
+        _enableWebSockets = enableWebSockets;
+    }
+
     protected override IResourceRequestHandler? GetResourceRequestHandler
     (
         IWebBrowser chromiumWebBrowser,
@@ -189,7 +214,7 @@ public class CustomRequestHandler : RequestHandler
     {
         if (frame.IsMain && request.ResourceType == ResourceType.MainFrame)
         {
-            return new CustomResourceRequestHandler();
+            return new CustomResourceRequestHandler(_enableWebSockets);
         }
 
         return null;
@@ -258,11 +283,15 @@ public class CefSharpBrowserWrapper : ICefBrowserWrapper
             // Create the CefSharp.OffScreen.ChromiumWebBrowser instance
             using (_browser = new ChromiumWebBrowser(url))
             {
-                if (!enableWebSockets)
+                if (enableWebSockets)
+                {
+                    Console.WriteLine("Injecting javascript to track browser WebSockets...");
+                }
+                else
                 {
                     Console.WriteLine("Injecting javascript to disable browser WebSockets...");
-                    _browser.RequestHandler = new CustomRequestHandler();
                 }
+                _browser.RequestHandler = new CustomRequestHandler(enableWebSockets);
 
                 var initialLoadResponse = await _browser.WaitForInitialLoadAsync();
                 if (!initialLoadResponse.Success)

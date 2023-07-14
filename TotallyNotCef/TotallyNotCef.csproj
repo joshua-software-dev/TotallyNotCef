@@ -9,7 +9,7 @@
 
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <EnableWindowsTargeting>true</EnableWindowsTargeting>
-        <FileVersion>1.0.0.6</FileVersion>
+        <FileVersion>1.0.0.7</FileVersion>
         <OutputPath>bin/$(Configuration)/</OutputPath>
         <OutputType>Exe</OutputType>
         <Platform>x64</Platform>
