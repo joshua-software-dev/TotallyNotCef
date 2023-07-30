@@ -33,7 +33,11 @@ public static class Program
 {
     public static int Main(string[] args)
     {
-        if (args.Length < 4) return 1;
+        if (args.Length < 4)
+        {
+            Console.WriteLine($"Provide the following arguments: <url> <httpServerPort> <enableAudio> <enableWebSockets>");
+            return 1;
+        }
         var url = args[0];
         ushort.TryParse(args[1], out var httpServerPort);
         ushort.TryParse(args[2], out var enableAudio);
