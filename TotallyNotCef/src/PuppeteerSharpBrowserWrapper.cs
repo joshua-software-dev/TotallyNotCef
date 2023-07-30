@@ -30,26 +30,35 @@ public class PuppeteerSharpBrowserWrapper : ICefBrowserWrapper
 
     public async Task Start(string url, ushort httpServerPort, bool enableAudio, bool enableWebSockets)
     {
-        var downloadPath = Path.Join
-        (
-            Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
-            "ChromeDownload"
-        );
-
         var options = new LaunchOptions { Headless = true };
-        using (var browserFetcher = new BrowserFetcher(new BrowserFetcherOptions { Path = downloadPath }))
+        var chromePath = Environment.GetEnvironmentVariable("CHROME_PATH");
+        if (chromePath != null)
         {
-            if (!Path.Exists(downloadPath))
+            Console.WriteLine($"Using CHROME_PATH: {chromePath}");
+            options.ExecutablePath = chromePath;
+        }
+        else
+        {
+            var downloadPath = Path.Join
+            (
+                Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+                "ChromeDownload"
+            );
+
+            using (var browserFetcher = new BrowserFetcher(new BrowserFetcherOptions { Path = downloadPath }))
             {
-                Console.WriteLine($"Downloading Chrome...");
-                var info = await browserFetcher.DownloadAsync(BrowserFetcher.DefaultChromiumRevision);
-                Console.WriteLine($"Chrome downloaded to: {info.ExecutablePath}");
-                options.ExecutablePath = info.ExecutablePath;
-            }
-            else
-            {
-                options.ExecutablePath = browserFetcher.GetExecutablePath(BrowserFetcher.DefaultChromiumRevision);
-                Console.WriteLine($"Using existing Chrome install: {options.ExecutablePath}");
+                if (!Path.Exists(downloadPath))
+                {
+                    Console.WriteLine($"Downloading Chrome...");
+                    var info = await browserFetcher.DownloadAsync(BrowserFetcher.DefaultChromiumRevision);
+                    Console.WriteLine($"Chrome downloaded to: {info.ExecutablePath}");
+                    options.ExecutablePath = info.ExecutablePath;
+                }
+                else
+                {
+                    options.ExecutablePath = browserFetcher.GetExecutablePath(BrowserFetcher.DefaultChromiumRevision);
+                    Console.WriteLine($"Using existing Chrome install: {options.ExecutablePath}");
+                }
             }
         }
 
@@ -58,6 +67,7 @@ public class PuppeteerSharpBrowserWrapper : ICefBrowserWrapper
             Console.WriteLine("Enabling audio...");
             options.IgnoredDefaultArgs = new [] { "--mute-audio" };
         }
+
 
         var browser = await Puppeteer.LaunchAsync(options);
 
