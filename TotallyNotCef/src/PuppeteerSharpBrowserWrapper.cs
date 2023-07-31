@@ -68,7 +68,6 @@ public class PuppeteerSharpBrowserWrapper : ICefBrowserWrapper
             options.IgnoredDefaultArgs = new [] { "--mute-audio" };
         }
 
-
         var browser = await Puppeteer.LaunchAsync(options);
 
         _page = await browser.NewPageAsync();
