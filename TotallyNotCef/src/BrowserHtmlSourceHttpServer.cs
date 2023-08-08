@@ -39,6 +39,19 @@ public class BrowserHtmlSourceHttpServer : NetCoreServer.HttpServer
                         _cts.Dispose();
                         System.Environment.Exit(0);
                     }
+                    else if (request.Url == "/tncef")
+                    {
+                        SendResponseAsync
+                        (
+                            Response.MakeGetResponse
+                            (
+                                """
+                                {"IsTotallyNotCef":true}
+                                """
+                            )
+                        );
+                        break;
+                    }
 
                     var source = _browser.GetHtmlSource() ?? string.Empty;
                     SendResponseAsync(Response.MakeGetResponse(source));
